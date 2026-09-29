@@ -1,0 +1,50 @@
+name: Job Scout
+
+on:
+  schedule:
+    # Wakes once a day at 15:00 UTC. The script itself decides whether to
+    # scrape, based on scrape_every_days in config.json, so the interval is a
+    # setting rather than something you edit here. Skipped days take seconds
+    # and use no proxy bandwidth.
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Scrape now, even if the interval hasn't passed"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: job-scout
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.12, not 3.13: python-jobspy pins numpy==1.26.3, which has no Linux
+      # wheel for Python 3.13.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '--force' || '' }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          WEBSHARE_PROXIES: ${{ secrets.WEBSHARE_PROXIES }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+        run: python run.py $FORCE

@@ -1,0 +1,12 @@
+# Secrets: never commit these
+client_secret*.json
+*.token.json
+.env
+*proxies*.txt
+
+# Local
+.venv/
+__pycache__/
+*.pyc
+out/
+.DS_Store

@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "linkedin",
+    "indeed"
+  ],
+  "locations": [
+    "San Francisco, CA",
+    "Los Angeles, CA"
+  ],
+  "distance_miles": 50,
+  "posted_within_hours": "auto",
+  "job_type": "",
+  "remote_only": false,
+  "easy_apply": false,
+  "country_indeed": "USA",
+  "annual_salary": false,
+  "scrape_every_days": 2,
+  "jobs_per_site": 20,
+  "max_per_search": 10,
+  "max_searches_per_site": 8,
+  "max_mb_per_run": 25,
+  "output_format": "csv",
+  "timezone": "America/Los_Angeles",
+  "drive_folder_name": "Job Scout",
+  "email_when_no_new_jobs": false
+}

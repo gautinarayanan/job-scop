@@ -1,0 +1,7 @@
+# Direct dependencies, pinned. Verified to resolve for linux/amd64 on
+# Python 3.12, which is what the GitHub Actions workflow uses.
+# (python-jobspy pins numpy==1.26.3, which has no Linux wheel for 3.13.)
+python-jobspy==1.1.82
+google-api-python-client==2.200.0
+google-auth==2.59.0
+google-auth-oauthlib==1.4.1

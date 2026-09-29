@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Scout Settings</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a64; --line: #e3e1d9;
+    --accent: #2f5d50; --accent-ink: #ffffff; --warn-bg: #fff4d6; --warn-ink: #6b4e00;
+    --err-bg: #fde8e6; --err-ink: #8a1f14; --ok-ink: #2f5d50; --code-bg: #f1efe8;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #a09e96; --line: #33322f;
+      --accent: #7fb7a4; --accent-ink: #10201b; --warn-bg: #3a3014; --warn-ink: #f1d488;
+      --err-bg: #3d1a16; --err-ink: #f4aaa0; --ok-ink: #8fd0b9; --code-bg: #2a2a27;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #a09e96; --line: #33322f;
+    --accent: #7fb7a4; --accent-ink: #10201b; --warn-bg: #3a3014; --warn-ink: #f1d488;
+    --err-bg: #3d1a16; --err-ink: #f4aaa0; --ok-ink: #8fd0b9; --code-bg: #2a2a27;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 18px 64px; }
+  header h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.01em; }
+  header p { margin: 0 0 22px; color: var(--muted); max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  section.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+                 padding: 18px 18px 6px; margin-bottom: 16px; }
+  section.card h2 { font-size: 15px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 6px 14px; align-items: start; margin-bottom: 14px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .row > label.k { font-weight: 600; padding-top: 7px; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  textarea { min-height: 96px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .inline { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 7px; }
+  .inline label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .kw { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 250px); gap: 14px; }
+  @media (max-width: 700px) { .kw { grid-template-columns: 1fr; } }
+  .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; color: var(--muted); cursor: pointer; }
+  .drop.over { border-color: var(--accent); color: var(--ink); }
+  .sample { background: var(--code-bg); border-radius: 10px; padding: 12px; font-size: 13px; }
+  .sample h3 { margin: 0 0 6px; font-size: 13px; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .btn { font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 14px; border: 1px solid var(--line);
+         background: var(--panel); color: var(--ink); cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  aside { position: sticky; top: 16px; }
+  aside .card { padding-bottom: 14px; }
+  .code { background: var(--code-bg); border-radius: 8px; padding: 10px; max-height: 280px; overflow: auto; }
+  .msg { border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: 13.5px; }
+  .msg.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .msg.err { background: var(--err-bg); color: var(--err-ink); }
+  .msg.ok { color: var(--ok-ink); padding-left: 0; }
+  .stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 5px 0; font-size: 14px; }
+  .stat b { font-variant-numeric: tabular-nums; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 6px; }
+  .tabs button { font: inherit; font-size: 13px; background: none; border: 0; padding: 4px 8px; border-radius: 6px; color: var(--muted); cursor: pointer; }
+  .tabs button[aria-selected=true] { background: var(--code-bg); color: var(--ink); font-weight: 600; }
+  ol.steps { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Job Scout settings</h1>
+  <p>Choose what to search and how often, add your job titles, then download
+     <code>config.json</code> and <code>keywords.json</code> and put both in the root of your repo.
+     Nothing leaves this page: it runs entirely in your browser.</p>
+  <div class="btns">
+    <label class="btn">Load existing config.json <input id="loadConfig" type="file" accept=".json,application/json" hidden></label>
+  </div>
+</header>
+
+<div class="grid">
+<main>
+  <section class="card">
+    <h2>Job titles</h2>
+    <div class="kw">
+      <div>
+        <div id="drop" class="drop" tabindex="0" role="button">
+          <b>Upload keywords.json</b><br>drop it here or click to choose
+          <input id="kwFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <div class="hint" style="margin:10px 0 4px">…or type one job title per line:</div>
+        <textarea id="kwText" spellcheck="false" placeholder="Data Analyst&#10;UX Researcher"></textarea>
+        <div id="kwMsgs"></div>
+      </div>
+      <div class="sample">
+        <h3>Sample keywords.json</h3>
+        <pre id="samplePre"></pre>
+        <p class="hint">A JSON list of job titles, each in double quotes, separated by commas.
+          Each title is searched separately, so be specific: <i>"Clinical Research Coordinator"</i>
+          finds more relevant jobs than <i>"research"</i>.</p>
+        <button class="btn" id="useSample" type="button">Use this sample</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Where</h2>
+    <div class="row"><label class="k">Job sites</label>
+      <div>
+        <div class="inline">
+          <label><input type="checkbox" id="siteLinkedin" checked> LinkedIn</label>
+          <label><input type="checkbox" id="siteIndeed" checked> Indeed</label>
+        </div>
+      </div>
+    </div>
+    <div class="row"><label class="k" for="locations">Locations</label>
+      <div><textarea id="locations" spellcheck="false" style="min-height:70px"></textarea>
+      <div class="hint">One per line, e.g. <i>San Francisco, CA</i>, <i>Austin, TX</i>, <i>Remote</i> or <i>United States</i>.
+        Every location is searched with every job title.</div></div>
+    </div>
+    <div class="row"><label class="k" for="distance">Search radius</label>
+      <select id="distance"><option value="10">10 miles</option><option value="25">25 miles</option>
+        <option value="50" selected>50 miles</option><option value="100">100 miles</option></select>
+    </div>
+    <div class="row"><label class="k" for="country">Indeed country</label>
+      <select id="country">
+        <option>USA</option><option>UK</option><option>Canada</option><option>Australia</option>
+        <option>India</option><option>Ireland</option><option>Germany</option><option>France</option>
+        <option>Netherlands</option><option>Singapore</option></select>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Which jobs</h2>
+    <div class="row"><label class="k" for="posted">Posted within</label>
+      <div><select id="posted">
+        <option value="auto" selected>Since the last scrape (automatic)</option>
+        <option value="24">24 hours</option><option value="48">2 days</option>
+        <option value="72">3 days</option><option value="168">1 week</option>
+        <option value="0">Any time</option></select>
+      <div class="hint">"Automatic" matches the scrape interval below, so nothing is missed or repeated.</div></div>
+    </div>
+    <div class="row"><label class="k" for="jobType">Job type</label>
+      <select id="jobType"><option value="">Any</option><option value="fulltime">Full-time</option>
+        <option value="parttime">Part-time</option><option value="contract">Contract</option>
+        <option value="internship">Internship</option></select>
+    </div>
+    <div class="row"><label class="k">Filters</label>
+      <div class="inline">
+        <label><input type="checkbox" id="remote"> Remote only</label>
+        <label><input type="checkbox" id="easyApply"> Easy Apply only</label>
+        <label><input type="checkbox" id="annual"> Show all pay as yearly</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>How often and how many</h2>
+    <div class="row"><label class="k" for="every">Scrape every</label>
+      <select id="every"><option value="1">day</option><option value="2" selected>2 days</option>
+        <option value="3">3 days</option><option value="4">4 days</option><option value="5">5 days</option>
+        <option value="7">week</option><option value="14">2 weeks</option></select>
+    </div>
+    <div class="row"><label class="k" for="perSite">New jobs per site</label>
+      <div><input type="number" id="perSite" min="1" max="200" value="20">
+      <div class="hint">Per scrape. With both sites on, 20 means about 40 new jobs each time.</div></div>
+    </div>
+    <div class="row"><label class="k" for="perSearch">Jobs per search</label>
+      <div><input type="number" id="perSearch" min="1" max="50" value="10">
+      <div class="hint">How many results to ask for in each title-and-location search.</div></div>
+    </div>
+    <div class="row"><label class="k" for="maxSearches">Max searches per site</label>
+      <div><input type="number" id="maxSearches" min="1" max="100" value="8">
+      <div class="hint">Stops a scrape from searching forever when titles are already exhausted.</div></div>
+    </div>
+    <div class="row"><label class="k" for="budget">Bandwidth cap per scrape</label>
+      <div><input type="number" id="budget" min="1" max="1000" step="1" value="25">
+      <div class="hint">MB. A hard stop. Normal use is well under 1 MB.</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Output</h2>
+    <div class="row"><label class="k">Scrape file format</label>
+      <div class="inline">
+        <label><input type="radio" name="fmt" value="csv" checked> CSV</label>
+        <label><input type="radio" name="fmt" value="json"> JSON</label>
+      </div>
+    </div>
+    <div class="row"><label class="k" for="tz">Your time zone</label>
+      <div><input type="text" id="tz" value="UTC" spellcheck="false">
+      <div class="hint">Sets the date in file names like <i>2026-09-28_jobslist.csv</i>. Filled in from this browser.</div></div>
+    </div>
+    <div class="row"><label class="k" for="folder">Google Drive folder</label>
+      <div><input type="text" id="folder" value="Job Scout">
+      <div class="hint">Created automatically. Renaming later starts a fresh folder.</div></div>
+    </div>
+    <div class="row"><label class="k">Email</label>
+      <div class="inline"><label><input type="checkbox" id="emailEmpty"> Email me even when a scrape finds nothing new</label></div>
+    </div>
+  </section>
+</main>
+
+<aside>
+  <section class="card">
+    <h2>Your setup</h2>
+    <div id="stats"></div>
+    <div id="warnings"></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="config" aria-selected="true">config.json</button>
+      <button role="tab" data-tab="keywords" aria-selected="false">keywords.json</button>
+    </div>
+    <div class="code"><pre id="preview"></pre></div>
+    <div class="btns">
+      <button class="btn primary" id="dlConfig" type="button">Download config.json</button>
+      <button class="btn primary" id="dlKeywords" type="button">Download keywords.json</button>
+      <button class="btn" id="copy" type="button">Copy shown file</button>
+    </div>
+    <div id="copyMsg" class="hint"></div>
+    <ol class="steps">
+      <li>On GitHub, open your repo → <b>Add file → Upload files</b>.</li>
+      <li>Drop both files, <b>Commit changes</b>.</li>
+      <li>The next scheduled run uses them. To run now: <b>Actions → Job Scout → Run workflow</b>.</li>
+    </ol>
+  </section>
+</aside>
+</div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const SAMPLE = ["Clinical Research Coordinator", "Research Data Analyst", "UX Researcher", "Data Analyst"];
+  const DEFAULT_LOCATIONS = ["San Francisco, CA", "Los Angeles, CA"];
+  // Measured on real runs: bytes on the wire per page of results.
+  const KB_LINKEDIN_PER_10 = 4.5, KB_INDEED_PER_JOB = 2.6, KB_PROXY_CHECK = 5;
+
+  let keywords = [];
+  let kwProblems = [];
+  let tab = "config";
+
+  $("samplePre").textContent = JSON.stringify(SAMPLE, null, 2);
+  $("locations").value = DEFAULT_LOCATIONS.join("\n");
+  try { $("tz").value = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch {}
+
+  // ── keywords ──────────────────────────────────────────────────────────────
+  function normalise(list) {
+    const seen = new Set(), out = [];
+    let dupes = 0;
+    for (const raw of list) {
+      const k = String(raw).replace(/\s+/g, " ").trim();
+      if (!k) continue;
+      const key = k.toLowerCase();
+      if (seen.has(key)) { dupes++; continue; }
+      seen.add(key); out.push(k);
+    }
+    return { out, dupes };
+  }
+
+  function setKeywords(list, source) {
+    const { out, dupes } = normalise(list);
+    keywords = out;
+    kwProblems = [];
+    const notes = [];
+    if (dupes) notes.push(`${dupes} duplicate title${dupes > 1 ? "s" : ""} removed.`);
+    if (source) notes.push(`Loaded ${out.length} title${out.length === 1 ? "" : "s"} from ${source}.`);
+    $("kwText").value = out.join("\n");
+    renderKwMsgs(notes);
+    update();
+  }
+
+  function renderKwMsgs(notes = []) {
+    const box = $("kwMsgs"); box.innerHTML = "";
+    for (const p of kwProblems) box.insertAdjacentHTML("beforeend", `<div class="msg err">${esc(p)}</div>`);
+    if (!kwProblems.length) {
+      for (const n of notes) box.insertAdjacentHTML("beforeend", `<div class="msg ok">${esc(n)}</div>`);
+      if (!keywords.length) box.insertAdjacentHTML("beforeend", `<div class="msg warn">Add at least one job title.</div>`);
+    }
+  }
+
+  function readKeywordFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try { data = JSON.parse(reader.result); }
+      catch (e) {
+        kwProblems = [`${file.name} is not valid JSON: ${e.message}. Compare it with the sample: square brackets, double quotes, commas between titles.`];
+        renderKwMsgs(); update(); return;
+      }
+      if (data && !Array.isArray(data) && Array.isArray(data.keywords)) data = data.keywords;
+      if (!Array.isArray(data)) {
+        kwProblems = [`${file.name} must be a list like the sample, starting with [ and ending with ].`];
+        renderKwMsgs(); update(); return;
+      }
+      const bad = data.filter((x) => typeof x !== "string");
+      if (bad.length) {
+        kwProblems = [`Every entry must be text in double quotes. Found ${bad.length} that ${bad.length === 1 ? "isn't" : "aren't"}: ${esc(JSON.stringify(bad.slice(0, 3)))}`];
+        renderKwMsgs(); update(); return;
+      }
+      setKeywords(data, file.name);
+    };
+    reader.readAsText(file);
+  }
+
+  const drop = $("drop");
+  drop.addEventListener("click", () => $("kwFile").click());
+  drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("kwFile").click(); } });
+  $("kwFile").addEventListener("change", (e) => { readKeywordFile(e.target.files[0]); e.target.value = ""; });
+  ["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => readKeywordFile(e.dataTransfer.files[0]));
+  $("kwText").addEventListener("input", () => {
+    kwProblems = [];
+    keywords = normalise($("kwText").value.split("\n")).out;
+    renderKwMsgs(); update();
+  });
+  $("useSample").addEventListener("click", () => setKeywords(SAMPLE, "the sample"));
+
+  // ── load an existing config.json ──────────────────────────────────────────
+  $("loadConfig").addEventListener("change", (e) => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { applyConfig(JSON.parse(reader.result)); }
+      catch (err) { alertBox(`Couldn't read ${file.name}: ${err.message}`); }
+    };
+    reader.readAsText(file);
+  });
+
+  function applyConfig(c) {
+    const set = (id, v) => { if (v !== undefined && v !== null) $(id).value = String(v); };
+    if (Array.isArray(c.sites)) { $("siteLinkedin").checked = c.sites.includes("linkedin"); $("siteIndeed").checked = c.sites.includes("indeed"); }
+    if (Array.isArray(c.locations)) $("locations").value = c.locations.join("\n");
+    set("distance", c.distance_miles); set("country", c.country_indeed);
+    set("posted", c.posted_within_hours); set("jobType", c.job_type);
+    $("remote").checked = !!c.remote_only; $("easyApply").checked = !!c.easy_apply; $("annual").checked = !!c.annual_salary;
+    set("every", c.scrape_every_days); set("perSite", c.jobs_per_site); set("perSearch", c.max_per_search);
+    set("maxSearches", c.max_searches_per_site); set("budget", c.max_mb_per_run);
+    if (c.output_format) document.querySelector(`input[name=fmt][value=${c.output_format === "json" ? "json" : "csv"}]`).checked = true;
+    set("folder", c.drive_folder_name); set("tz", c.timezone); $("emailEmpty").checked = !!c.email_when_no_new_jobs;
+    update();
+  }
+
+  // ── build + validate ──────────────────────────────────────────────────────
+  const int = (id, lo, hi) => {
+    const n = Math.round(Number($(id).value));
+    return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo;
+  };
+
+  function buildConfig() {
+    const sites = [];
+    if ($("siteLinkedin").checked) sites.push("linkedin");
+    if ($("siteIndeed").checked) sites.push("indeed");
+    const posted = $("posted").value;
+    return {
+      sites,
+      locations: normalise($("locations").value.split("\n")).out,
+      distance_miles: Number($("distance").value),
+      posted_within_hours: posted === "auto" ? "auto" : Number(posted),
+      job_type: $("jobType").value,
+      remote_only: $("remote").checked,
+      easy_apply: $("easyApply").checked,
+      country_indeed: $("country").value,
+      annual_salary: $("annual").checked,
+      scrape_every_days: Number($("every").value),
+      jobs_per_site: int("perSite", 1, 200),
+      max_per_search: int("perSearch", 1, 50),
+      max_searches_per_site: int("maxSearches", 1, 100),
+      max_mb_per_run: int("budget", 1, 1000),
+      output_format: document.querySelector("input[name=fmt]:checked").value,
+      timezone: $("tz").value.trim() || "UTC",
+      drive_folder_name: $("folder").value.trim() || "Job Scout",
+      email_when_no_new_jobs: $("emailEmpty").checked,
+    };
+  }
+
+  function problems(cfg) {
+    const errs = [], warns = [];
+    if (!cfg.sites.length) errs.push("Pick at least one job site.");
+    if (!cfg.locations.length) errs.push("Add at least one location.");
+    if (!keywords.length || kwProblems.length) errs.push("Fix the job titles list.");
+    try { new Intl.DateTimeFormat("en", { timeZone: cfg.timezone }); }
+    catch { errs.push(`"${cfg.timezone}" isn't a time zone name. Use one like America/Los_Angeles.`); }
+    const postedOn = cfg.posted_within_hours === "auto" || cfg.posted_within_hours > 0;
+    const ignored = [cfg.job_type && "job type", cfg.remote_only && "remote only", cfg.easy_apply && "Easy Apply"].filter(Boolean);
+    if (cfg.sites.includes("indeed") && postedOn && ignored.length)
+      warns.push(`Indeed can't combine "Posted within" with ${ignored.join(", ")}, so it will ignore ${ignored.length > 1 ? "those" : "that"}. LinkedIn applies everything. Set "Posted within" to "Any time" if the filter matters more.`);
+    if (cfg.max_per_search > cfg.jobs_per_site)
+      warns.push(`"Jobs per search" (${cfg.max_per_search}) is more than "new jobs per site" (${cfg.jobs_per_site}); the extra results are fetched but not kept.`);
+    const pairs = keywords.length * cfg.locations.length;
+    if (pairs > cfg.max_searches_per_site) {
+      const runs = Math.ceil(pairs / cfg.max_searches_per_site);
+      warns.push(`${pairs} title-and-location combinations but at most ${cfg.max_searches_per_site} searches per scrape: every combination gets searched over about ${runs} scrapes (roughly ${runs * cfg.scrape_every_days} days). Titles rotate so none is skipped for good.`);
+    }
+    return { errs, warns };
+  }
+
+  function estimate(cfg) {
+    const runsPerMonth = 30 / cfg.scrape_every_days;
+    const perSite = Math.min(cfg.max_searches_per_site, Math.max(1, keywords.length * cfg.locations.length));
+    let kb = KB_PROXY_CHECK;
+    if (cfg.sites.includes("linkedin")) kb += perSite * Math.ceil(cfg.max_per_search / 10) * KB_LINKEDIN_PER_10;
+    if (cfg.sites.includes("indeed")) kb += perSite * cfg.max_per_search * KB_INDEED_PER_JOB;
+    return { runsPerMonth, perRunMB: kb / 1000, monthMB: (kb / 1000) * runsPerMonth };
+  }
+
+  function update() {
+    const cfg = buildConfig();
+    const { errs, warns } = problems(cfg);
+    const est = estimate(cfg);
+    const newPerScrape = cfg.jobs_per_site * cfg.sites.length;
+
+    $("stats").innerHTML = [
+      ["Job titles", keywords.length],
+      ["New jobs per scrape", `up to ${newPerScrape}`],
+      ["Scrapes per month", `~${Math.round(est.runsPerMonth)}`],
+      ["Bandwidth per month", `≤ ${est.monthMB < 1 ? est.monthMB.toFixed(2) : est.monthMB.toFixed(1)} MB of 1,000`],
+    ].map(([k, v]) => `<div class="stat"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("");
+
+    const w = $("warnings"); w.innerHTML = "";
+    errs.forEach((e) => w.insertAdjacentHTML("beforeend", `<div class="msg err">${esc(e)}</div>`));
+    warns.forEach((e) => w.insertAdjacentHTML("beforeend", `<div class="msg warn">${esc(e)}</div>`));
+    if (est.perRunMB > cfg.max_mb_per_run)
+      w.insertAdjacentHTML("beforeend", `<div class="msg warn">A scrape could use about ${est.perRunMB.toFixed(1)} MB, more than your ${cfg.max_mb_per_run} MB cap, so it may stop early.</div>`);
+
+    const ok = errs.length === 0;
+    $("dlConfig").disabled = !ok;
+    $("dlKeywords").disabled = !keywords.length || kwProblems.length > 0;
+    $("preview").textContent = tab === "config" ? json(cfg) : json(keywords);
+    window.__jobScout = { config: cfg, keywords, errors: errs };
+  }
+
+  // ── output ────────────────────────────────────────────────────────────────
+  const json = (x) => JSON.stringify(x, null, 2) + "\n";
+  function esc(s) { return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  function alertBox(text) { $("warnings").insertAdjacentHTML("afterbegin", `<div class="msg err">${esc(text)}</div>`); }
+
+  function download(name, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $("dlConfig").addEventListener("click", () => download("config.json", json(buildConfig())));
+  $("dlKeywords").addEventListener("click", () => download("keywords.json", json(keywords)));
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("preview").textContent); $("copyMsg").textContent = `Copied ${tab}.json.`; }
+    catch { $("copyMsg").textContent = "Copy isn't allowed here; select the text above and copy it manually."; }
+  });
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+    update();
+  }));
+
+  document.querySelectorAll("main input, main select, main textarea").forEach((el) => {
+    if (el.id !== "kwText" && el.type !== "file") el.addEventListener("input", update);
+  });
+
+  setKeywords(SAMPLE);
+  $("kwMsgs").innerHTML = `<div class="hint">Showing the sample list. Upload your own file or edit it above.</div>`;
+})();
+</script>
+</body>
+</html>
