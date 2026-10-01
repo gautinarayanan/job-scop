@@ -19,6 +19,12 @@ Google Drive / Job Scout/
 Each job has only **Title, Company, Location, Salary, Link**, plus the site it
 came from and the date found. No descriptions, no processing, no AI.
 
+**Link** goes to the employer's own job page whenever one is available, so you
+apply on the company site rather than through the job board. Indeed provides this
+for nearly every listing. LinkedIn only shows the company link to logged-in users,
+so LinkedIn jobs keep their LinkedIn link. The CSV also has a **Board Link**
+column with the original Indeed/LinkedIn page.
+
 ---
 
 ## Settings

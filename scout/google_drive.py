@@ -168,7 +168,7 @@ class GoogleStore:
         rows = [{"values": [
             _text("Not applied"), _text(""),
             _text(j["Title"]), _text(j["Company"]), _text(j["Location"]), _text(j["Salary"]),
-            _text(j["Site"]), _link(j["Link"], "Open"), _text(j["Found"]),
+            _text(j["Site"]), _link(j["Link"], "Company site" if j.get("_direct") else j["Site"]), _text(j["Found"]),
             _link(file_url, file_name), _text(""),
         ]} for j in jobs]
         status_col = MASTER_HEADERS.index("Status")

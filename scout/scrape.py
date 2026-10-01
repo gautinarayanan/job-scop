@@ -30,7 +30,11 @@ import requests
 
 log = logging.getLogger("scout.scrape")
 
-COLUMNS = ["Title", "Company", "Location", "Salary", "Site", "Link", "Found"]
+COLUMNS = ["Title", "Company", "Location", "Salary", "Site", "Link", "Found", "Board Link"]
+
+# Hosts that are job boards, not employers. A "direct" link pointing at one of
+# these is just another board page, so the board link is kept instead.
+BOARD_HOSTS = ("indeed.com", "linkedin.com", "glassdoor.com", "ziprecruiter.com")
 
 
 # ── Byte meter ───────────────────────────────────────────────────────────────
@@ -196,6 +200,20 @@ def format_salary(row: Dict) -> str:
     return f"{text}/{per}" if per else text
 
 
+def direct_link(row: Dict) -> str:
+    """The employer's own job page, when jobspy found one.
+
+    Indeed returns it for most listings at no extra cost (recruit.viewJobUrl in
+    the same response). LinkedIn only reveals it to logged-in users, so for
+    LinkedIn this is effectively always empty and the LinkedIn link is used.
+    """
+    url = _clean(row.get("job_url_direct"))
+    if not url.startswith(("https://", "http://")):
+        return ""
+    host = url.split("/")[2].lower()
+    return "" if any(host == b or host.endswith("." + b) for b in BOARD_HOSTS) else url
+
+
 def dedupe_keys(title: str, company: str, link: str) -> List[str]:
     norm = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
     keys = [link] if link else []
@@ -290,9 +308,12 @@ def scrape_site(site: str, cfg, seen: Set[str], plan: List[tuple], meter: ByteMe
         added = 0
         for row in df.to_dict("records"):
             title, company = _clean(row.get("title")), _clean(row.get("company"))
-            link = _clean(row.get("job_url"))
-            keys = dedupe_keys(title, company, link)
-            if not link or not title or any(k in seen for k in keys):
+            # Dedupe on the board link: it's the stable job ID, and it matches
+            # keys already stored in the Seen tab before direct links existed.
+            board = _clean(row.get("job_url"))
+            direct = direct_link(row)
+            keys = dedupe_keys(title, company, board)
+            if not board or not title or any(k in seen for k in keys):
                 continue
             seen.update(keys)
             result.jobs.append({
@@ -301,8 +322,10 @@ def scrape_site(site: str, cfg, seen: Set[str], plan: List[tuple], meter: ByteMe
                 "Location": _clean(row.get("location")),
                 "Salary": format_salary(row),
                 "Site": "LinkedIn" if site == "linkedin" else "Indeed",
-                "Link": link,
+                "Link": direct or board,
                 "Found": today,
+                "Board Link": board,
+                "_direct": bool(direct),
                 "_keys": keys,
             })
             added += 1
